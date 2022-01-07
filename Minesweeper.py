@@ -4,6 +4,8 @@ import numpy as np
 
 pg.init()
 
+FRAMERATE = 60
+
 SCALE = 40
 WIDTH = 20
 HEIGHT = 10
@@ -27,11 +29,14 @@ COLORS = {
 LEFT_CLICK = 1
 RIGHT_CLICK = 3
 
+# revealed constants
 HIDDEN = 0
 REVEALED_NOT_DRAWN = 1
 REVEALED = 2
 FLAG_NOT_DRAWN = 3
 FLAG = 4
+
+MINE = 9
 
 class MinesweeperGame:
 
@@ -80,7 +85,7 @@ class MinesweeperGame:
 			self.draw_board(window)
 
 			pg.display.flip()
-			windowclock.tick(60)
+			windowclock.tick(FRAMERATE)
 		pg.quit()
 
 	def draw_board(self, window):
@@ -116,7 +121,7 @@ class MinesweeperGame:
 		y = j * l
 
 		if n:
-			font = pg.font.SysFont('arial', 30)
+			font = pg.font.SysFont('arial', self.gs // 4 * 3)
 			text = font.render(f'{int(n)}', True, self.get_color(int(n)))
 			text_rect = text.get_rect()
 			window.blit(text, text_rect.move(x + (l - text_rect.width) / 2, y + (l - text_rect.height) / 2))
@@ -125,8 +130,8 @@ class MinesweeperGame:
 		x = i * l
 		y = j * l
 
-		font = pg.font.SysFont('arial', 30)
-		text = font.render('F', True, (255, 0, 0))
+		font = pg.font.SysFont('arial', self.gs // 4 * 3)
+		text = font.render('F', True, self.get_color("RD"))
 		text_rect = text.get_rect()
 		window.blit(text, text_rect.move(x + (l - text_rect.width) / 2, y + (l - text_rect.height) / 2))
 
@@ -149,7 +154,7 @@ class MinesweeperGame:
 		mines_list = rd.sample(range(self.gw * self.gh), self.nm)
 		x = [m % self.gw for m in mines_list]
 		y = [m // self.gw for m in mines_list]
-		mines[(x, y)] = 9
+		mines[(x, y)] = MINE
 		return mines
 
 	def init_hints(self, mines):
@@ -178,10 +183,10 @@ class MinesweeperGame:
 		return False
 
 	def reveal_cell(self, c):
-		if self.map[c] == 9:
+		if self.map[c] == MINE:
 			print("YOU LOSE!!!")
 			self.reveal_all()
-		self.revealed[c] = 1
+		self.revealed[c] = REVEALED_NOT_DRAWN
 		if self.map[c] == 0:
 			i = c[0]
 			j = c[1]
@@ -193,10 +198,10 @@ class MinesweeperGame:
 						self.reveal_cell((i + x, j + y))
 
 	def flag_cell(self, c):
-		if self.revealed[c] == 0:
-			self.revealed[c] = 3
-		elif self.revealed[c] == 4:
-			self.revealed[c] = 0
+		if self.revealed[c] == HIDDEN:
+			self.revealed[c] = FLAG_NOT_DRAWN
+		elif self.revealed[c] == FLAG:
+			self.revealed[c] = HIDDEN
 
 	def check_victory(self):
 		n_uncovered = 0
