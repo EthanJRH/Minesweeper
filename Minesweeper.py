@@ -7,9 +7,9 @@ pg.init()
 # GAME CONSTANTS
 FRAMERATE = 60
 SCALE = 40
-WIDTH = 20
+WIDTH = 10
 HEIGHT = 10
-N = 100
+N = WIDTH * HEIGHT // 10
 
 COLORS = {
 	"BL": (48, 123, 242),  # blue
@@ -78,8 +78,6 @@ class MinesweeperGame:
 
 				if event.type == pg.QUIT:
 					running = False
-
-			self.check_victory()
 
 			self.draw_board(window)
 
@@ -185,7 +183,9 @@ class MinesweeperGame:
 		i = c[0]
 		j = c[1]
 
-		print(self.revealed[c], self.count_surr_flags(c), self.map[c])
+		if self.revealed[c] == FLAG:
+			self.revealed[c] = HIDDEN
+			return
 
 		if self.map[c] == MINE:
 			print("YOU LOSE!!!")
@@ -208,6 +208,8 @@ class MinesweeperGame:
 							i + x < self.gw and y + j < self.gh):
 						if self.revealed[i + x, j + y] == HIDDEN:
 							self.reveal_cell((i + x, j + y))
+
+		self.check_victory()
 
 	def count_surr_flags(self, c):
 		i = c[0]
@@ -233,11 +235,12 @@ class MinesweeperGame:
 
 		for i in range(self.gw):
 			for j in range(self.gh):
-				if self.revealed[i, j] == 2:
+				if self.revealed[i, j] == REVEALED or self.revealed[i, j] == REVEALED_NOT_DRAWN:
 					n_uncovered += 1
 
 		if n_uncovered == self.gw * self.gh - self.nm:
 			print("YOU WIN!!!")
+
 
 	def reveal_all(self):
 		self.revealed = np.ones((self.gw, self.gh))
@@ -249,7 +252,7 @@ class MinesweeperGame:
 			return list(COLORS.values())[c - 1]
 
 def main():
-	g = MinesweeperGame(WIDTH, HEIGHT, SCALE, HEIGHT * WIDTH // 10)
+	g = MinesweeperGame(WIDTH, HEIGHT, SCALE, N)
 	g.play()
 
 if __name__ == '__main__':
