@@ -4,12 +4,11 @@ import numpy as np
 
 pg.init()
 
+# GAME CONSTANTS
 FRAMERATE = 60
-
 SCALE = 40
 WIDTH = 20
 HEIGHT = 10
-
 N = 100
 
 COLORS = {
@@ -26,10 +25,11 @@ COLORS = {
 	"DG": (130, 130, 130), # dark grey
 }
 
+# MOUSE CONSTANTS
 LEFT_CLICK = 1
 RIGHT_CLICK = 3
 
-# revealed constants
+# STATE CONSTANTS
 HIDDEN = 0
 REVEALED_NOT_DRAWN = 1
 REVEALED = 2
@@ -70,11 +70,10 @@ class MinesweeperGame:
 				elif event.type == pg.MOUSEBUTTONUP:
 					mouse_u = pg.mouse.get_pos()
 					clicked_cell = self.is_same_cell(mouse_d, mouse_u)
-					if event.button == LEFT_CLICK:
-						if clicked_cell:
-							self.reveal_cell(clicked_cell)
-					if event.button == RIGHT_CLICK:
-						if clicked_cell:
+					if clicked_cell:
+						if event.button == LEFT_CLICK:
+							self.reveal_cell(clicked_cell, True)
+						if event.button == RIGHT_CLICK:
 							self.flag_cell(clicked_cell)
 
 				if event.type == pg.QUIT:
@@ -182,20 +181,46 @@ class MinesweeperGame:
 			return((x1, y1))
 		return False
 
-	def reveal_cell(self, c):
+	def reveal_cell(self, c, clicked = False):
+		i = c[0]
+		j = c[1]
+
+		print(self.revealed[c], self.count_surr_flags(c), self.map[c])
+
 		if self.map[c] == MINE:
 			print("YOU LOSE!!!")
 			self.reveal_all()
-		self.revealed[c] = REVEALED_NOT_DRAWN
-		if self.map[c] == 0:
-			i = c[0]
-			j = c[1]
+
+		elif self.map[c] > 0 and self.revealed[c] == REVEALED and self.count_surr_flags(c) == self.map[c] and clicked:
 			for x in range(-1, 2):
 				for y in range(-1, 2):
 					if (i + x >= 0 and j + y >= 0 and
 							i + x < self.gw and y + j < self.gh and
-							self.revealed[i + x, y + j] == 0):
+							self.revealed[i + x, j + y] == HIDDEN):
 						self.reveal_cell((i + x, j + y))
+
+		self.revealed[c] = REVEALED_NOT_DRAWN
+
+		if self.map[c] == 0:
+			for x in range(-1, 2):
+				for y in range(-1, 2):
+					if (i + x >= 0 and j + y >= 0 and
+							i + x < self.gw and y + j < self.gh):
+						if self.revealed[i + x, j + y] == HIDDEN:
+							self.reveal_cell((i + x, j + y))
+
+	def count_surr_flags(self, c):
+		i = c[0]
+		j = c[1]
+		n_flags = 0
+		for x in range(-1, 2):
+			for y in range(-1, 2):
+				if (i + x >= 0 and j + y >= 0 and
+						i + x < self.gw and y + j < self.gh):
+					if self.revealed[i + x, j + y] == 4:
+						n_flags += 1
+
+		return n_flags
 
 	def flag_cell(self, c):
 		if self.revealed[c] == HIDDEN:
